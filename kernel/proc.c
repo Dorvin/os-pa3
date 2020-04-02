@@ -123,6 +123,61 @@ found:
   return p;
 }
 
+int
+getpgid(int pid)
+{
+  struct proc *p;
+  int pgid;
+  if(pid == 0){
+    p = myproc();
+    return p->pgid;
+  }
+  for(p = proc; p < &proc[NPROC]; p++){
+    acquire(&p->lock);
+    if(p->pid == pid){
+      pgid = p->pgid;
+      release(&p->lock);
+      return pgid;
+    }
+    release(&p->lock);
+  }
+  return -1;
+}
+
+int
+setpgid(int pid, int pgid)
+{
+  struct proc *p;
+  if(pid < 0 || pgid < 0){
+    return -1;
+  }
+  if(pid == 0){
+    p = myproc();
+    acquire(&p->lock);
+    if(pgid == 0){
+      p->pgid = p->pid;
+    } else {
+      p->pgid = pgid;
+    }
+    release(&p->lock);
+    return 0;
+  }
+  for(p = proc; p < &proc[NPROC]; p++){
+    acquire(&p->lock);
+    if(p->pid == pid){
+      if(pgid == 0){
+        p->pgid = p->pid;
+      } else {
+        p->pgid = pgid;
+      }
+      release(&p->lock);
+      return 0;
+    }
+    release(&p->lock);
+  }
+  return -1;
+}
+
 // free a proc structure and the data hanging from it,
 // including user pages.
 // p->lock must be held.
