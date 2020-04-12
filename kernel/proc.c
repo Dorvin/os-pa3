@@ -653,23 +653,67 @@ wakeup1(struct proc *p)
 // Kill the process with the given pid.
 // The victim won't exit until it tries to return
 // to user space (see usertrap() in trap.c).
+// On success (at least one process was terminated), zero is returned.
+// On error (no process was terminated), -1 is returned.
 int
 kill(int pid)
 {
   struct proc *p;
-
-  for(p = proc; p < &proc[NPROC]; p++){
-    acquire(&p->lock);
-    if(p->pid == pid){
-      p->killed = 1;
-      if(p->state == SLEEPING){
-        // Wake process from sleep().
-        p->state = RUNNABLE;
+  if(pid > 0){
+    // kill process.pid = pid
+    for(p = proc; p < &proc[NPROC]; p++){
+      acquire(&p->lock);
+      if(p->pid == pid){
+        p->killed = 1;
+        if(p->state == SLEEPING){
+          // Wake process from sleep().
+          p->state = RUNNABLE;
+        }
+        release(&p->lock);
+        return 0;
       }
       release(&p->lock);
+    }
+  } else if(pid < 0){
+    // kill process.pgid = -pid
+    int count = 0;
+    for(p = proc; p < &proc[NPROC]; p++){
+      acquire(&p->lock);
+      if(p->pgid == -pid){
+        p->killed = 1;
+        if(p->state == SLEEPING){
+          // Wake process from sleep().
+          p->state = RUNNABLE;
+        }
+        release(&p->lock);
+        count++;
+      }
+      release(&p->lock);
+    }
+    if(count > 0){
       return 0;
     }
-    release(&p->lock);
+  } else {
+    // kill process.pgid = calling_process.pgid
+    struct proc *calling_process;
+    int count = 0;
+    calling_process = myproc();
+    for(p = proc; p < &proc[NPROC]; p++){
+      acquire(&p->lock);
+      if(p->pgid == calling_process->pgid){
+        p->killed = 1;
+        if(p->state == SLEEPING){
+          // Wake process from sleep().
+          p->state = RUNNABLE;
+        }
+        release(&p->lock);
+        count++;
+      }
+      release(&p->lock);
+    }
+    if(count > 0){
+      return 0;
+    }
   }
   return -1;
 }
