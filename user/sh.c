@@ -67,6 +67,7 @@ runcmd(struct cmd *cmd)
   if(cmd == 0)
     exit(1);
 
+  setpgid(0, 0);
   switch(cmd->type){
   default:
     panic("runcmd");
