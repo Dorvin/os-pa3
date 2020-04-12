@@ -67,7 +67,6 @@ runcmd(struct cmd *cmd)
   if(cmd == 0)
     exit(1);
 
-  setpgid(0, 0);
   switch(cmd->type){
   default:
     panic("runcmd");
@@ -165,8 +164,10 @@ main(void)
         fprintf(2, "cannot cd %s\n", buf+3);
       continue;
     }
-    if(fork1() == 0)
+    int fork_pid;
+    if((fork_pid = fork1()) == 0)
       runcmd(parsecmd(buf));
+    setpgid(fork_pid, 0);
     wait(0);
   }
   exit(0);

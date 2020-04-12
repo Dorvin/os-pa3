@@ -105,6 +105,7 @@ int             either_copyin(void *dst, int user_src, uint64 src, uint64 len);
 void            procdump(void);
 int             getpgid(int);
 int             setpgid(int, int);
+void            kill_foreground(void);
 
 // swtch.S
 void            swtch(struct context*, struct context*);

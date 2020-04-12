@@ -687,6 +687,7 @@ kill(int pid)
         }
         release(&p->lock);
         count++;
+        continue;
       }
       release(&p->lock);
     }
@@ -708,6 +709,7 @@ kill(int pid)
         }
         release(&p->lock);
         count++;
+        continue;
       }
       release(&p->lock);
     }
@@ -774,5 +776,16 @@ procdump(void)
       state = "???";
     printf("%d %d %s %s", p->pid, p->pgid, state, p->name);
     printf("\n");
+  }
+}
+
+// kill foreground processes
+void
+kill_foreground(void)
+{
+  struct proc *p;
+  p = proc + 2;
+  if(p->state != UNUSED && p->pid == p->pgid){
+    kill(-1 * p->pgid);
   }
 }
