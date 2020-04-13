@@ -784,8 +784,10 @@ void
 kill_foreground(void)
 {
   struct proc *p;
-  p = proc + 2;
-  if(p->state != UNUSED && p->pid == p->pgid){
-    kill(-1 * p->pgid);
+  for(p = proc+1; p < &proc[NPROC]; p++){
+    if(p->state != UNUSED && p->pid != 0 && p->pid == p->pgid){
+      kill(-1 * p->pgid);
+      break;
+    }
   }
 }
